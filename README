@@ -1,0 +1,5 @@
+A very simple plugin that shows the git differences on the current document.
+
+Install:
+	* mkdir -p $HOME/.local/share/gedit/plugins
+	* cp -r git git.plugin $HOME/.local/share/gedit/plugins/

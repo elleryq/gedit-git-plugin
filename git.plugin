@@ -1,0 +1,9 @@
+[Plugin]
+Loader=python3
+Module=git
+IAge=3
+Name=Git
+Description=Git differences
+Authors=Ignacio Casal Quintiero <icq@gnome.org>
+Copyright=Copyright © 2013 Ignacio Casal Quinteiro
+Website=http://www.gedit.org
