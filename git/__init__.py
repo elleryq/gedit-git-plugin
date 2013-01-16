@@ -75,7 +75,12 @@ class DiffThread(threading.Thread):
 
             # convert data to list of lines
             src_contents_list = self.source_contents.splitlines(1)
-            file_blob_list = file_blob.get_raw_content().decode('utf-8').splitlines(1)
+            file_blob_list = file_blob.get_raw_content().decode('utf-8').splitlines(True)
+
+            # remove the last empty line added by gedit
+            last_item = file_blob_list[len(file_blob_list) -1]
+            if last_item[-1:] == '\n':
+                file_blob_list[len(file_blob_list) -1] = last_item[:-1]
 
             diff = difflib.unified_diff(file_blob_list, src_contents_list, n=0)
             # skip first 2 lines: ---, +++
