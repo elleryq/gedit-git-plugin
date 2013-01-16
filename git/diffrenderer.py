@@ -57,6 +57,17 @@ class DiffRenderer(GtkSource.GutterRenderer):
         else:
             self.diff_type = DiffType.NONE
 
+    def do_query_tooltip(self, it, area, x, y, tooltip):
+        line = it.get_line() + 1
+        if line in self.file_context:
+            line_context = self.file_context[line]
+            if line_context.line_type == DiffType.REMOVED or line_context.line_type == DiffType.MODIFIED:
+                removed = ''.join(map(str, line_context.removed_lines))
+                added = ''.join(map(str, line_context.added_lines))
+                tooltip.set_text(removed + added)
+                return True
+        return False
+
     def set_data(self, file_context):
         self.file_context = file_context
         self.queue_draw()
