@@ -57,10 +57,8 @@ class DiffRenderer(GtkSource.GutterRenderer):
         else:
             self.diff_type = DiffType.NONE
 
-    def set_type(self, diff_type):
-        self.diff_type = diff_type
-
     def set_data(self, file_context):
         self.file_context = file_context
+        self.queue_draw()
 
 # ex:ts=4:et:
