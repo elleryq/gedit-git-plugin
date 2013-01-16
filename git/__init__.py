@@ -28,7 +28,8 @@ import sys
 class LineContext:
     def __init__(self):
         self.line_num = 0
-        self.lines = []
+        self.removed_lines = []
+        self.added_lines = []
         self.line_type = DiffType.NONE
 
 class DiffThread(threading.Thread):
@@ -94,20 +95,22 @@ class DiffThread(threading.Thread):
                     # no hunk point increase
                     if hunk_point in self.file_context:
                         line_context = self.file_context[hunk_point]
-                        line_context.lines.append(line_data[1:])
+                        line_context.removed_lines.append(line_data[1:])
                     else:
                         line_context = LineContext()
                         line_context.line_type = DiffType.REMOVED
-                        line_context.lines.append(line_data[1:])
+                        line_context.removed_lines.append(line_data[1:])
                         self.file_context[hunk_point] = line_context
                 elif line_data[0] == '+':
                     if hunk_point in self.file_context:
                         line_context = self.file_context[hunk_point]
-                        line_context.lines.append(line_data[1:])
+                        if line_context.line_type == DiffType.REMOVED:
+                            line_context.line_type = DiffType.MODIFIED
+                        line_context.added_lines.append(line_data[1:])
                     else:
                         line_context = LineContext()
                         line_context.line_type = DiffType.ADDED
-                        line_context.lines.append(line_data[1:])
+                        line_context.added_lines.append(line_data[1:])
                         self.file_context[hunk_point] = line_context
 
                     hunk_point += 1
