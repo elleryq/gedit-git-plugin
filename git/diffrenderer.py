@@ -54,6 +54,8 @@ class DiffRenderer(GtkSource.GutterRenderer):
         if line in self.file_context:
             line_context = self.file_context[line]
             self.diff_type = line_context.line_type
+        else:
+            self.diff_type = DiffType.NONE
 
     def set_type(self, diff_type):
         self.diff_type = diff_type
