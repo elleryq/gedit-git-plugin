@@ -22,6 +22,12 @@ from .diffrenderer import DiffType, DiffRenderer
 
 import os
 import threading
+import difflib
+import sys
+
+class LineContext:
+    line_num = 0
+    lines = []
 
 class DiffThread(threading.Thread):
     def __init__(self, doc, finishcb):
@@ -35,7 +41,8 @@ class DiffThread(threading.Thread):
         self.clock = threading.Lock()
         self.cancelled = False
         self.finishcb = finishcb
-        self.diff_opts = Ggit.DiffOptions.new(Ggit.DiffFlags.FORCE_TEXT, 1, 0, None, None, None)
+        self.diff_opts = Ggit.DiffOptions.new(Ggit.DiffFlags.FORCE_TEXT | Ggit.DiffFlags.IGNORE_WHITESPACE_EOL, 1, 0, None, None, None)
+        self.file_context = {}
 
         self.idle_finish = 0
 
@@ -49,19 +56,7 @@ class DiffThread(threading.Thread):
         self.clock.release()
 
     def finish_in_idle(self):
-        self.finishcb()
-
-    def file_cb(self, delta, progress, user_data):
-        print(progress)
-        return 0
-
-    def hunk_cb(self, delta, drange, header, user_data):
-        return 0
-
-    def line_cb(self, delta, drange, line_type, content, user_data):
-        print(line_type)
-        print(content)
-        return 0
+        self.finishcb(self.file_context)
 
     def run(self):
         try:
@@ -75,7 +70,39 @@ class DiffThread(threading.Thread):
 
             entry = tree.get_by_path(relative_path)
             file_blob = repo.lookup(entry.get_id(), Ggit.Blob.__gtype__)
-            Ggit.Diff.blob_to_buffer(self.diff_opts, file_blob, self.source_contents, self.file_cb, self.hunk_cb, self.line_cb, None)
+
+            # convert data to list of lines
+            src_contents_list = self.source_contents.splitlines(1)
+            file_blob_list = file_blob.get_raw_content().decode('utf-8').splitlines(1)
+
+            diff = difflib.unified_diff(file_blob_list, src_contents_list, n=0)
+            # skip first 2 lines: ---, +++
+            next(diff)
+            next(diff)
+
+            hunk = 0
+            hunk_point = 0
+            for line_data in diff:
+                if line_data[0] == '@':
+                    t = [token for token in line_data.split() if token[0] == '+']
+                    t = t[0]
+                    hunk = int(t.split(',')[0])
+                    hunk_point = hunk
+                elif line_data[0] == '-':
+                    # no hunk point increase
+                    if hunk_point in self.file_context:
+                        lines = self.file_context[hunk_point]
+                        lines.append(line_data[1:])
+                    else:
+                        self.file_context[hunk_point] = [line_data[1:]]
+                elif line_data[0] == '+':
+                    if hunk_point in self.file_context:
+                        lines = self.file_context[hunk_point]
+                        lines.append(line_data[1:])
+                    else:
+                        self.file_context[hunk_point] = [line_data[1:]]
+
+                    hunk_point += 1
         except Exception as e:
             print(e)
             return
@@ -174,7 +201,8 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         return False
 
-    def on_diff_finished(self):
+    def on_diff_finished(self, file_context):
+        print(file_context)
         print("on diff finished")
 
 # ex:ts=4:et:
