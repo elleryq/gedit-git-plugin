@@ -32,7 +32,7 @@ class DiffRenderer(GtkSource.GutterRenderer):
         self.diff_type = DiffType.NONE
         self.file_context = {}
 
-        self.set_size(10)
+        self.set_size(6)
 
     def do_draw(self, cr, bg_area, cell_area, start, end, state):
         GtkSource.GutterRenderer.do_draw(self, cr, bg_area, cell_area, start, end, state)
