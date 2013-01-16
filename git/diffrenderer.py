@@ -32,19 +32,19 @@ class DiffRenderer(GtkSource.GutterRenderer):
         self.diff_type = DiffType.NONE
         self.file_context = {}
 
-        self.set_size(6)
+        self.set_size(4)
 
     def do_draw(self, cr, bg_area, cell_area, start, end, state):
         GtkSource.GutterRenderer.do_draw(self, cr, bg_area, cell_area, start, end, state)
 
-        if self.diff_type == DiffType.ADDED:
-            cr.set_source_rgba(0.8, 0.9, 0.3, 1.0)
-        elif self.diff_type == DiffType.MODIFIED:
-            cr.set_source_rgba(0.8, 0.6, 0.2, 1.0)
-        elif self.diff_type == DiffType.REMOVED:
-            cr.set_source_rgba(1.0, 0.0, 0.0, 1.0)
-
         if self.diff_type is not DiffType.NONE:
+            if self.diff_type == DiffType.ADDED:
+                cr.set_source_rgba(0.8, 0.9, 0.3, 1.0)
+            elif self.diff_type == DiffType.MODIFIED:
+                cr.set_source_rgba(0.8, 0.6, 0.2, 1.0)
+            elif self.diff_type == DiffType.REMOVED:
+                cr.set_source_rgba(1.0, 0.0, 0.0, 1.0)
+
             cr.rectangle(cell_area.x, cell_area.y, cell_area.width, cell_area.height)
             cr.fill()
             cr.paint()
