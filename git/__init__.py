@@ -23,7 +23,6 @@ from .diffrenderer import DiffType, DiffRenderer
 import os
 import threading
 import difflib
-import sys
 
 class LineContext:
     def __init__(self):
