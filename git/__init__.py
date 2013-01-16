@@ -26,8 +26,10 @@ import difflib
 import sys
 
 class LineContext:
-    line_num = 0
-    lines = []
+    def __init__(self):
+        self.line_num = 0
+        self.lines = []
+        self.line_type = DiffType.NONE
 
 class DiffThread(threading.Thread):
     def __init__(self, doc, finishcb):
@@ -91,16 +93,22 @@ class DiffThread(threading.Thread):
                 elif line_data[0] == '-':
                     # no hunk point increase
                     if hunk_point in self.file_context:
-                        lines = self.file_context[hunk_point]
-                        lines.append(line_data[1:])
+                        line_context = self.file_context[hunk_point]
+                        line_context.lines.append(line_data[1:])
                     else:
-                        self.file_context[hunk_point] = [line_data[1:]]
+                        line_context = LineContext()
+                        line_context.line_type = DiffType.REMOVED
+                        line_context.lines.append(line_data[1:])
+                        self.file_context[hunk_point] = line_context
                 elif line_data[0] == '+':
                     if hunk_point in self.file_context:
-                        lines = self.file_context[hunk_point]
-                        lines.append(line_data[1:])
+                        line_context = self.file_context[hunk_point]
+                        line_context.lines.append(line_data[1:])
                     else:
-                        self.file_context[hunk_point] = [line_data[1:]]
+                        line_context = LineContext()
+                        line_context.line_type = DiffType.ADDED
+                        line_context.lines.append(line_data[1:])
+                        self.file_context[hunk_point] = line_context
 
                     hunk_point += 1
         except Exception as e:
@@ -127,7 +135,6 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         Ggit.init()
 
         self.diff_renderer = DiffRenderer()
-        self.diff_renderer.set_type(DiffType.ADDED)
         gutter = self.view.get_gutter(Gtk.TextWindowType.LEFT)
         gutter.insert(self.diff_renderer, 40)
 
@@ -136,7 +143,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         self._view_signals = [
             self.view.connect('notify::buffer', self.on_notify_buffer),
         ]
-        
+
         self._connect_buffer()
 
     def _connect_buffer(self):
@@ -202,7 +209,6 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         return False
 
     def on_diff_finished(self, file_context):
-        print(file_context)
-        print("on diff finished")
+        self.diff_renderer.set_data(file_context)
 
 # ex:ts=4:et:

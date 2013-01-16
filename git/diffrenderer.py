@@ -30,6 +30,7 @@ class DiffRenderer(GtkSource.GutterRenderer):
     def __init__(self):
         GtkSource.GutterRenderer.__init__(self)
         self.diff_type = DiffType.NONE
+        self.file_context = {}
 
         self.set_size(10)
 
@@ -48,7 +49,16 @@ class DiffRenderer(GtkSource.GutterRenderer):
             cr.fill()
             cr.paint()
 
+    def do_query_data(self, start, end, state):
+        line = start.get_line() + 1
+        if line in self.file_context:
+            line_context = self.file_context[line]
+            self.diff_type = line_context.line_type
+
     def set_type(self, diff_type):
         self.diff_type = diff_type
+
+    def set_data(self, file_context):
+        self.file_context = file_context
 
 # ex:ts=4:et:
