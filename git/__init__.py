@@ -177,6 +177,9 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         self._view_signals = []
 
     def do_deactivate(self):
+        if self.diff_timeout != 0:
+            GLib.source_remove(self.diff_timeout)
+
         self._disconnect_buffer()
         self._disconnect_view()
         self.gutter.remove(self.diff_renderer)
