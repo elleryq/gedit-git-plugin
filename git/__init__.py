@@ -142,8 +142,8 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         Ggit.init()
 
         self.diff_renderer = DiffRenderer()
-        gutter = self.view.get_gutter(Gtk.TextWindowType.LEFT)
-        gutter.insert(self.diff_renderer, 40)
+        self.gutter = self.view.get_gutter(Gtk.TextWindowType.LEFT)
+        self.gutter.insert(self.diff_renderer, 40)
 
         self._buffer = self.view.get_buffer()
 
@@ -177,6 +177,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
     def do_deactivate(self):
         self._disconnect_buffer()
         self._disconnect_view()
+        self.gutter.remove(self.diff_renderer)
 
         self._buffer = None
 
