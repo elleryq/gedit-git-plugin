@@ -61,6 +61,10 @@ class DiffThread(threading.Thread):
         self.finishcb(self.file_context)
 
     def run(self):
+        # do nothing if it is an unsaved document
+        if not self.location:
+            return
+
         try:
             repo_file = Ggit.Repository.discover(self.location)
             repo = Ggit.Repository.open(repo_file)
