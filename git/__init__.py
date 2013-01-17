@@ -153,6 +153,8 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         self._connect_buffer()
 
+        self.update()
+
     def _connect_buffer(self):
         self._buffer_signals = [
             self._buffer.connect('loaded', self.on_loaded),
