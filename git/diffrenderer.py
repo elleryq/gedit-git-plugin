@@ -17,7 +17,7 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330,
 #  Boston, MA 02111-1307, USA.
 
-from gi.repository import Gtk, GtkSource
+from gi.repository import Gdk, Gtk, GtkSource
 
 class DiffType:
     NONE     = 0
@@ -33,21 +33,30 @@ class DiffRenderer(GtkSource.GutterRenderer):
         self.file_context = {}
 
         self.set_size(4)
+        self.bg_added = Gdk.RGBA()
+        self.bg_added.parse("#8ae234")
+        self.bg_modified = Gdk.RGBA()
+        self.bg_modified.parse("#fcaf3e")
+        self.bg_removed = Gdk.RGBA()
+        self.bg_removed.parse("#ef2929")
 
     def do_draw(self, cr, bg_area, cell_area, start, end, state):
         GtkSource.GutterRenderer.do_draw(self, cr, bg_area, cell_area, start, end, state)
 
         if self.diff_type is not DiffType.NONE:
-            if self.diff_type == DiffType.ADDED:
-                cr.set_source_rgba(0.8, 0.9, 0.3, 1.0)
-            elif self.diff_type == DiffType.MODIFIED:
-                cr.set_source_rgba(0.8, 0.6, 0.2, 1.0)
-            elif self.diff_type == DiffType.REMOVED:
-                cr.set_source_rgba(1.0, 0.0, 0.0, 1.0)
+            bg = None
 
+            if self.diff_type == DiffType.ADDED:
+                bg = self.bg_added
+            elif self.diff_type == DiffType.MODIFIED:
+                bg = self.bg_modified
+            elif self.diff_type == DiffType.REMOVED:
+                bg = self.bg_removed
+
+            # background
+            Gdk.cairo_set_source_rgba(cr, bg)
             cr.rectangle(cell_area.x, cell_area.y, cell_area.width, cell_area.height)
             cr.fill()
-            cr.paint()
 
     def do_query_data(self, start, end, state):
         line = start.get_line() + 1
