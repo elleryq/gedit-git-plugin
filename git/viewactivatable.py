@@ -28,7 +28,6 @@ class LineContext:
     def __init__(self):
         self.line_num = 0
         self.removed_lines = []
-        self.added_lines = []
         self.line_type = DiffType.NONE
 
 class DiffThread(threading.Thread):
@@ -114,11 +113,9 @@ class DiffThread(threading.Thread):
                         line_context = self.file_context[hunk_point]
                         if line_context.line_type == DiffType.REMOVED:
                             line_context.line_type = DiffType.MODIFIED
-                        line_context.added_lines.append(line_data[1:])
                     else:
                         line_context = LineContext()
                         line_context.line_type = DiffType.ADDED
-                        line_context.added_lines.append(line_data[1:])
                         self.file_context[hunk_point] = line_context
 
                     hunk_point += 1
