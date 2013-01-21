@@ -42,7 +42,6 @@ class DiffThread(threading.Thread):
         self.clock = threading.Lock()
         self.cancelled = False
         self.finishcb = finishcb
-        self.diff_opts = Ggit.DiffOptions.new(Ggit.DiffFlags.FORCE_TEXT | Ggit.DiffFlags.IGNORE_WHITESPACE_EOL, 1, 0, None, None, None)
         self.file_context = {}
 
         self.idle_finish = 0
@@ -73,7 +72,7 @@ class DiffThread(threading.Thread):
             file_blob = repo.lookup(entry.get_id(), Ggit.Blob.__gtype__)
 
             # convert data to list of lines
-            src_contents_list = self.source_contents.splitlines(1)
+            src_contents_list = self.source_contents.splitlines(True)
             file_blob_list = file_blob.get_raw_content().decode('utf-8').splitlines(True)
 
             # remove the last empty line added by gedit
