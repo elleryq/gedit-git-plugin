@@ -60,10 +60,6 @@ class DiffThread(threading.Thread):
         self.finishcb(self.file_context)
 
     def run(self):
-        # do nothing if it is an unsaved document
-        if not self.location:
-            return
-
         try:
             repo_file = Ggit.Repository.discover(self.location)
             repo = Ggit.Repository.open(repo_file)
@@ -211,6 +207,10 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         if self.diff_thread != None:
             self.diff_thread.cancel()
             self.diff_thread = None
+
+        # do nothing if it is an unsaved document
+        if not self._buffer.get_location():
+            return
 
         self.diff_timeout = GLib.timeout_add(300, self.on_diff_timeout)
 
