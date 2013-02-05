@@ -156,7 +156,8 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
     def _connect_buffer(self):
         self._buffer_signals = [
             self._buffer.connect('loaded', self.on_loaded),
-            self._buffer.connect('changed', self.on_changed)
+            self._buffer.connect('changed', self.on_changed),
+            self._buffer.connect('saved', self.on_saved)
         ]
 
     def _disconnect(self, obj, signals):
@@ -198,6 +199,9 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         self.update()
 
     def on_changed(self, doc):
+        self.update()
+
+    def on_saved(self, doc, error):
         self.update()
 
     def update(self, args=None):
