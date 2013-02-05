@@ -114,6 +114,8 @@ class DiffThread(threading.Thread):
                         self.file_context[hunk_point] = line_context
 
                     hunk_point += 1
+        except StopIteration:
+            pass
         except Exception as e:
             print(e)
             return
