@@ -70,6 +70,7 @@ class DiffRenderer(GtkSource.GutterRenderer):
         # Check that the context is the same not the line this
         # way contexts that span multiple times are handled correctly
         if self._file_context.get(self.tooltip_line, None) is line_context:
+            tooltip.set_custom(None)
             tooltip.set_custom(self.tooltip)
             return True
 
