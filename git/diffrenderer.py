@@ -19,66 +19,112 @@
 
 from gi.repository import Gdk, Gtk, GtkSource
 
+
 class DiffType:
-    NONE     = 0
-    ADDED    = 1
-    MODIFIED = 2
-    REMOVED  = 3
+    (NONE,
+     ADDED,
+     MODIFIED,
+     REMOVED) = range(4)
+
 
 class DiffRenderer(GtkSource.GutterRenderer):
 
+    backgrounds = {}
+    backgrounds[DiffType.ADDED] = Gdk.RGBA()
+    backgrounds[DiffType.MODIFIED] = Gdk.RGBA()
+    backgrounds[DiffType.REMOVED] = Gdk.RGBA()
+    backgrounds[DiffType.ADDED].parse("#8ae234")
+    backgrounds[DiffType.MODIFIED].parse("#fcaf3e")
+    backgrounds[DiffType.REMOVED].parse("#ef2929")
+
     def __init__(self):
         GtkSource.GutterRenderer.__init__(self)
-        self.diff_type = DiffType.NONE
-        self.file_context = {}
 
-        self.set_size(4)
-        self.bg_added = Gdk.RGBA()
-        self.bg_added.parse("#8ae234")
-        self.bg_modified = Gdk.RGBA()
-        self.bg_modified.parse("#fcaf3e")
-        self.bg_removed = Gdk.RGBA()
-        self.bg_removed.parse("#ef2929")
+        self.set_size(8)
+        self._file_context = {}
+        self.tooltip = None
+        self.tooltip_line = 0
 
     def do_draw(self, cr, bg_area, cell_area, start, end, state):
-        GtkSource.GutterRenderer.do_draw(self, cr, bg_area, cell_area, start, end, state)
+        GtkSource.GutterRenderer.do_draw(self, cr, bg_area, cell_area,
+                                         start, end, state)
 
-        if self.diff_type is not DiffType.NONE:
-            bg = None
+        line_context = self._file_context.get(start.get_line() + 1, None)
+        if line_context is None or line_context.line_type == DiffType.NONE:
+            return
 
-            if self.diff_type == DiffType.ADDED:
-                bg = self.bg_added
-            elif self.diff_type == DiffType.MODIFIED:
-                bg = self.bg_modified
-            elif self.diff_type == DiffType.REMOVED:
-                bg = self.bg_removed
+        background = self.backgrounds[line_context.line_type]
 
-            # background
-            Gdk.cairo_set_source_rgba(cr, bg)
-            cr.rectangle(cell_area.x, cell_area.y, cell_area.width, cell_area.height)
-            cr.fill()
-
-    def do_query_data(self, start, end, state):
-        self.diff_type = DiffType.NONE
-
-        line = start.get_line() + 1
-        if line in self.file_context:
-            line_context = self.file_context[line]
-            self.diff_type = line_context.line_type
+        Gdk.cairo_set_source_rgba(cr, background)
+        cr.rectangle(cell_area.x, cell_area.y,
+                     cell_area.width, cell_area.height)
+        cr.fill()
 
     def do_query_tooltip(self, it, area, x, y, tooltip):
         line = it.get_line() + 1
-        if line in self.file_context:
-            line_context = self.file_context[line]
-            if line_context.line_type == DiffType.REMOVED or line_context.line_type == DiffType.MODIFIED:
-                removed = ''.join(map(str, line_context.removed_lines))
-                # remove latest character which is always a \n
-                tooltip.set_text(removed[:-1])
-                return True
-        return False
 
-    def set_data(self, file_context):
-        self.file_context = file_context
+        line_context = self._file_context.get(line, None)
+        if line_context is None:
+            return False
+
+        # Check that the context is the same not the line this
+        # way contexts that span multiple times are handled correctly
+        if self._file_context.get(self.tooltip_line, None) is line_context:
+            tooltip.set_custom(self.tooltip)
+            return True
+
+        if line_context.line_type not in (DiffType.REMOVED, DiffType.MODIFIED):
+            return False
+
+        tooltip_buffer = GtkSource.Buffer()
+        tooltip_view = GtkSource.View.new_with_buffer(tooltip_buffer)
+
+        # Propogate the view's settings
+        content_view = self.get_view()
+        tooltip_view.set_indent_width(content_view.get_indent_width())
+        tooltip_view.set_tab_width(content_view.get_tab_width())
+
+        # Propogate the buffer's settings
+        content_buffer = content_view.get_buffer()
+        tooltip_buffer.set_highlight_syntax(content_buffer.get_highlight_syntax())
+        tooltip_buffer.set_language(content_buffer.get_language())
+        tooltip_buffer.set_style_scheme(content_buffer.get_style_scheme())
+
+        # Fix some styling issues
+        tooltip_buffer.set_highlight_matching_brackets(False)
+        tooltip_view.set_border_width(4)
+        tooltip_view.set_cursor_visible(False)
+
+        # Set the font
+        content_style_context = content_view.get_style_context()
+        content_font = content_style_context.get_font(Gtk.StateFlags.NORMAL)
+        tooltip_view.override_font(content_font)
+
+        # Only add what can be shown, we
+        # don't want to add hundreds of lines
+        allocation = content_view.get_allocation()
+        lines = allocation.height // area.height
+        # Remove last character which is always a "\n"
+        removed = ''.join(map(str, line_context.removed_lines[:lines]))[:-1]
+        tooltip_buffer.set_text(removed)
+
+        # Avoid having to create the tooltip multiple times
+        self.tooltip = tooltip_view
+        self.tooltip_line = line
+
+        tooltip.set_custom(tooltip_view)
+        return True
+
+    @property
+    def file_context(self):
+        return self._file_context
+
+    @file_context.setter
+    def file_context(self, file_context):
+        self._file_context = file_context
+        self.tooltip = None
+        self.tooltip_line = 0
+
         self.queue_draw()
 
 # ex:ts=4:et:
