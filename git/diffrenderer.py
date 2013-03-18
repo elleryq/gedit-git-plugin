@@ -41,7 +41,7 @@ class DiffRenderer(GtkSource.GutterRenderer):
         GtkSource.GutterRenderer.__init__(self)
 
         self.set_size(8)
-        self._file_context = {}
+        self.file_context = {}
         self.tooltip = None
         self.tooltip_line = 0
 
@@ -49,7 +49,7 @@ class DiffRenderer(GtkSource.GutterRenderer):
         GtkSource.GutterRenderer.do_draw(self, cr, bg_area, cell_area,
                                          start, end, state)
 
-        line_context = self._file_context.get(start.get_line() + 1, None)
+        line_context = self.file_context.get(start.get_line() + 1, None)
         if line_context is None or line_context.line_type == DiffType.NONE:
             return
 
@@ -63,13 +63,13 @@ class DiffRenderer(GtkSource.GutterRenderer):
     def do_query_tooltip(self, it, area, x, y, tooltip):
         line = it.get_line() + 1
 
-        line_context = self._file_context.get(line, None)
+        line_context = self.file_context.get(line, None)
         if line_context is None:
             return False
 
         # Check that the context is the same not the line this
         # way contexts that span multiple times are handled correctly
-        if self._file_context.get(self.tooltip_line, None) is line_context:
+        if self.file_context.get(self.tooltip_line, None) is line_context:
             tooltip.set_custom(None)
             tooltip.set_custom(self.tooltip)
             return True
@@ -80,12 +80,12 @@ class DiffRenderer(GtkSource.GutterRenderer):
         tooltip_buffer = GtkSource.Buffer()
         tooltip_view = GtkSource.View.new_with_buffer(tooltip_buffer)
 
-        # Propogate the view's settings
+        # Propagate the view's settings
         content_view = self.get_view()
         tooltip_view.set_indent_width(content_view.get_indent_width())
         tooltip_view.set_tab_width(content_view.get_tab_width())
 
-        # Propogate the buffer's settings
+        # Propagate the buffer's settings
         content_buffer = content_view.get_buffer()
         tooltip_buffer.set_highlight_syntax(content_buffer.get_highlight_syntax())
         tooltip_buffer.set_language(content_buffer.get_language())
@@ -116,13 +116,8 @@ class DiffRenderer(GtkSource.GutterRenderer):
         tooltip.set_custom(tooltip_view)
         return True
 
-    @property
-    def file_context(self):
-        return self._file_context
-
-    @file_context.setter
-    def file_context(self, file_context):
-        self._file_context = file_context
+    def set_file_context(self, file_context):
+        self.file_context = file_context
         self.tooltip = None
         self.tooltip_line = 0
 

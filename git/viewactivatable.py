@@ -41,6 +41,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         self.diff_timeout = 0
         self.file_contents_list = None
+        self.file_context = None
 
     def do_activate(self):
         self.diff_renderer = DiffRenderer()
@@ -82,20 +83,19 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         self.buffer = view.get_buffer()
         self.buffer_signals = [
-            self.buffer.connect('changed', self.update),
             self.buffer.connect('loaded', self.update_location),
             self.buffer.connect('saved', self.update_location)
+            # The changed signal is connected to in
+            # update_location() and is expected to be the third signal
         ]
 
-        self.update_location()
+        # We wait and let the loaded signal call
+        # update_location() as the buffer is currently empty
 
     def update_location(self, *args):
         self.location = self.buffer.get_location()
         if self.location is None:
             return
-
-        # Might no longer be in a git repository
-        self.file_contents_list = None
 
         try:
             repo_file = Ggit.Repository.discover(self.location)
@@ -106,7 +106,17 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         except Exception:
             # Not a git repository
+            if self.file_contents_list is not None:
+                self.file_contents_list = None
+                self.gutter.remove(self.diff_renderer)
+                self.buffer.disconnect(self.buffer_signals.pop())
+
             return
+
+        if self.file_contents_list is None:
+            self.gutter.insert(self.diff_renderer, 40)
+            self.buffer_signals.append(self.buffer.connect('changed',
+                                                           self.update))
 
         try:
             relative_path = repo.get_workdir().get_relative_path(self.location)
@@ -128,11 +138,15 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         self.update()
 
     def update(self, *unused):
-        if self.file_contents_list is None or self.location is None:
+        # We don't let the delay accumulate
+        if self.diff_timeout != 0:
             return
 
-        # We don't let the delay accumulate
-        if self.diff_timeout == 0:
+        # Do the initial diff without a delay
+        if self.file_context is None:
+            self.on_diff_timeout()
+
+        else:
             self.diff_timeout = GLib.timeout_add(500, self.on_diff_timeout)
 
     def on_diff_timeout(self):
@@ -157,7 +171,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         diff = difflib.unified_diff(self.file_contents_list,
                                     src_contents_list, n=0)
 
-        # Skip first 2 lines: ---, +++
+        # Skip the first 2 lines: ---, +++
         try:
             next(diff)
             next(diff)
@@ -206,7 +220,8 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
                 file_context[i + 1] = file_context[i]
                 del file_context[i]
 
-        self.diff_renderer.file_context = file_context
+        self.file_context = file_context
+        self.diff_renderer.set_file_context(file_context)
 
         self.diff_timeout = 0
         return False
