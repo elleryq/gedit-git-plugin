@@ -64,9 +64,6 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         self.disconnect_view()
         self.gutter.remove(self.diff_renderer)
 
-    def do_update_state(self):
-        pass
-
     def disconnect(self, obj, signals):
         for sid in signals:
             obj.disconnect(sid)
