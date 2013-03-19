@@ -169,8 +169,8 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             self.diff_renderer.set_file_context(file_context)
             return False
 
-        bounds = self.buffer.get_bounds()
-        src_contents  = bounds[0].get_text(bounds[1])
+        start_iter, end_iter = self.buffer.get_bounds()
+        src_contents = start_iter.get_text(end_iter)
         src_contents_list = src_contents.splitlines(True)
 
         diff = difflib.unified_diff(self.file_contents_list,
