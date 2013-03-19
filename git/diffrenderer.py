@@ -105,8 +105,7 @@ class DiffRenderer(GtkSource.GutterRenderer):
         # don't want to add hundreds of lines
         allocation = content_view.get_allocation()
         lines = allocation.height // area.height
-        # Remove last character which is always a "\n"
-        removed = ''.join(map(str, line_context.removed_lines[:lines]))[:-1]
+        removed = '\n'.join(map(str, line_context.removed_lines[:lines]))
         tooltip_buffer.set_text(removed)
 
         # Avoid having to create the tooltip multiple times

@@ -127,7 +127,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             entry = tree.get_by_path(relative_path)
             file_blob = repo.lookup(entry.get_id(), Ggit.Blob.__gtype__)
             file_contents = file_blob.get_raw_content()
-            self.file_contents_list = file_contents.splitlines(True)
+            self.file_contents_list = file_contents.splitlines()
 
             # Remove the last empty line added by gedit automatically
             last_item = self.file_contents_list[-1]
@@ -170,8 +170,12 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             return False
 
         start_iter, end_iter = self.buffer.get_bounds()
-        src_contents = start_iter.get_text(end_iter)
-        src_contents_list = src_contents.splitlines(True)
+        src_contents = start_iter.get_visible_text(end_iter)
+        src_contents_list = src_contents.splitlines()
+
+        # GtkTextBuffer does not consider a trailing "\n" to be text
+        if len(src_contents_list) != self.buffer.get_line_count():
+            src_contents_list.append('')
 
         diff = difflib.unified_diff(self.file_contents_list,
                                     src_contents_list, n=0)
