@@ -150,7 +150,11 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             self.on_diff_timeout()
 
         else:
-            self.diff_timeout = GLib.timeout_add(500, self.on_diff_timeout)
+            n_lines = self.buffer.get_line_count()
+            delay = min(10000, 200 * (n_lines // 2000 + 1))
+
+            self.diff_timeout = GLib.timeout_add(delay,
+                                                 self.on_diff_timeout)
 
     def on_diff_timeout(self):
         self.diff_timeout = 0
