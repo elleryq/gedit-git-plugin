@@ -82,11 +82,11 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             self.disconnect_buffer()
 
         self.buffer = view.get_buffer()
+
+        # The changed signal is connected to in update_location()
         self.buffer_signals = [
             self.buffer.connect('loaded', self.update_location),
             self.buffer.connect('saved', self.update_location)
-            # The changed signal is connected to in
-            # update_location() and is expected to be the third signal
         ]
 
         # We wait and let the loaded signal call
