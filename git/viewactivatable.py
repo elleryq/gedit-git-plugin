@@ -78,6 +78,9 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         self.disconnect(self.view, self.view_signals)
 
     def on_notify_buffer(self, view, gspec=None):
+        if self.diff_timeout != 0:
+            GLib.source_remove(self.diff_timeout)
+
         if self.buffer:
             self.disconnect_buffer()
 
