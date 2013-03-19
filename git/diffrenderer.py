@@ -41,6 +41,8 @@ class DiffRenderer(GtkSource.GutterRenderer):
         GtkSource.GutterRenderer.__init__(self)
 
         self.set_size(8)
+        self.set_padding(3, 0)
+
         self.file_context = {}
         self.tooltip = None
         self.tooltip_line = 0
