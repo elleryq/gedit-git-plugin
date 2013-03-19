@@ -46,7 +46,6 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
     def do_activate(self):
         self.diff_renderer = DiffRenderer()
         self.gutter = self.view.get_gutter(Gtk.TextWindowType.LEFT)
-        self.gutter.insert(self.diff_renderer, 40)
 
         self.view_signals = [
             self.view.connect('notify::buffer', self.on_notify_buffer),
@@ -112,6 +111,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             if self.file_contents_list is not None:
                 self.file_contents_list = None
                 self.gutter.remove(self.diff_renderer)
+                self.diff_renderer.set_file_context({})
                 self.buffer.disconnect(self.buffer_signals.pop())
 
             return
