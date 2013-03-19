@@ -153,19 +153,21 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             self.diff_timeout = GLib.timeout_add(500, self.on_diff_timeout)
 
     def on_diff_timeout(self):
+        self.diff_timeout = 0
+
         # Must be a new file
         if not self.file_contents_list:
             n_lines = self.buffer.get_line_count()
             if len(self.diff_renderer.file_context) == n_lines:
-                return
+                return False
 
             line_context = LineContext()
             line_context.line_type = DiffType.ADDED
             file_context = dict(zip(range(1, n_lines + 1),
                                     [line_context] * n_lines))
 
-            self.diff_renderer.file_context = file_context
-            return
+            self.diff_renderer.set_file_context(file_context)
+            return False
 
         bounds = self.buffer.get_bounds()
         src_contents  = bounds[0].get_text(bounds[1])
@@ -225,8 +227,6 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         self.file_context = file_context
         self.diff_renderer.set_file_context(file_context)
-
-        self.diff_timeout = 0
         return False
 
 # ex:ts=4:et:
