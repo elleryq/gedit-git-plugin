@@ -127,7 +127,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             entry = tree.get_by_path(relative_path)
             file_blob = repo.lookup(entry.get_id(), Ggit.Blob.__gtype__)
             file_contents = file_blob.get_raw_content()
-            self.file_contents_list = file_contents.splitlines()
+            self.file_contents_list = file_contents.decode('utf-8').splitlines()
 
             # Remove the last empty line added by gedit automatically
             last_item = self.file_contents_list[-1]
