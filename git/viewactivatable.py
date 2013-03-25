@@ -131,7 +131,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
             # Remove the last empty line added by gedit automatically
             last_item = self.file_contents_list[-1]
-            if last_item[-1] == '\n':
+            if last_item[-1:] == '\n':
                 self.file_contents_list[-1] = last_item[:-1]
 
         except Exception:
