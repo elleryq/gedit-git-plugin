@@ -49,6 +49,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         self.view_signals = [
             self.view.connect('notify::buffer', self.on_notify_buffer),
+            self.view.connect('focus-in-event', self.update_location)
         ]
 
         self.buffer = None
