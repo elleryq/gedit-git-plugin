@@ -229,7 +229,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         # Occurs when all of the original content is deleted
         if 0 in file_context:
-            for i in reversed(file_context.keys()):
+            for i in reversed(list(file_context.keys())):
                 file_context[i + 1] = file_context[i]
                 del file_context[i]
 
