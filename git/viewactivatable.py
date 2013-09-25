@@ -17,7 +17,7 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330,
 #  Boston, MA 02111-1307, USA.
 
-from gi.repository import GLib, GObject, Gtk, Gedit, Ggit
+from gi.repository import GLib, GObject, Gtk, Gedit
 from .diffrenderer import DiffType, DiffRenderer
 
 import difflib
@@ -37,7 +37,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
     def __init__(self):
         GObject.Object.__init__(self)
 
-        Ggit.init()
+        #Ggit.init()
 
         self.diff_timeout = 0
         self.file_contents_list = None
@@ -99,6 +99,9 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         self.location = self.buffer.get_location()
         if self.location is None:
             return
+
+        print(self.location)
+        return
 
         try:
             repo_file = Ggit.Repository.discover(self.location)
