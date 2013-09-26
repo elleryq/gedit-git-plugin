@@ -111,21 +111,14 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         return git
 
     def _get_blob_content(self, relative_path):
-        print(">>", relative_path)
         content = None
         try:
-            print("a")
             process = Popen(["git", "show", 'HEAD:{0}'.format(relative_path)],
                 cwd=os.path.dirname(self.location.get_path()),
                 stdout=PIPE, stderr=PIPE)
-            print("b")
             content, err = process.communicate()
-            print("c")
-            print(content)
         except Exception, ex:
-            print(ex)
             raise ex
-        print("<<")
         return content
 
     def update_location(self, *args):
@@ -162,7 +155,6 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
         except Exception, ex:
             # New file in a git repository
-            print(ex)
             self.file_contents_list = []
 
         self.update()
