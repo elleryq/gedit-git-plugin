@@ -21,6 +21,8 @@ from gi.repository import GLib, GObject, Gtk, Gedit
 from .diffrenderer import DiffType, DiffRenderer
 
 import difflib
+import os
+from subprocess import Popen, PIPE
 
 
 class LineContext:
@@ -36,8 +38,6 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
 
     def __init__(self):
         GObject.Object.__init__(self)
-
-        #Ggit.init()
 
         self.diff_timeout = 0
         self.file_contents_list = None
@@ -95,30 +95,55 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         # We wait and let the loaded signal call
         # update_location() as the buffer is currently empty
 
+    def _find_git_repository(self, full_path):
+        """Look for .git
+        """
+        curdir = os.path.dirname(full_path)
+        git = None
+
+        olddir = None
+        while curdir != '/' and curdir != olddir and not git:
+            git = os.path.join(curdir, ".git")
+            if not os.path.exists(git):
+                git = None
+                olddir = curdir
+                curdir = os.path.dirname(curdir)
+        return git
+
+    def _get_blob_content(self, relative_path):
+        print(">>", relative_path)
+        content = None
+        try:
+            print("a")
+            process = Popen(["git", "show", 'HEAD:{0}'.format(relative_path)],
+                cwd=os.path.dirname(self.location.get_path()),
+                stdout=PIPE, stderr=PIPE)
+            print("b")
+            content, err = process.communicate()
+            print("c")
+            print(content)
+        except Exception, ex:
+            print(ex)
+            raise ex
+        print("<<")
+        return content
+
     def update_location(self, *args):
         self.location = self.buffer.get_location()
         if self.location is None:
             return
 
-        print(self.location)
-        return
-
-        try:
-            repo_file = Ggit.Repository.discover(self.location)
-            repo = Ggit.Repository.open(repo_file)
-            head = repo.get_head()
-            commit = repo.lookup(head.get_target(), Ggit.Commit.__gtype__)
-            tree = commit.get_tree()
-
-        except Exception:
+        dot_git = self._find_git_repository(self.location.get_path())
+        if not dot_git:
             # Not a git repository
             if self.file_contents_list is not None:
                 self.file_contents_list = None
                 self.gutter.remove(self.diff_renderer)
                 self.diff_renderer.set_file_context({})
                 self.buffer.disconnect(self.buffer_signals.pop())
-
             return
+
+        relative_path = self.location.get_path()[len(os.path.dirname(dot_git))+1:]
 
         if self.file_contents_list is None:
             self.gutter.insert(self.diff_renderer, 40)
@@ -126,20 +151,18 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
                                                            self.update))
 
         try:
-            relative_path = repo.get_workdir().get_relative_path(self.location)
-
-            entry = tree.get_by_path(relative_path)
-            file_blob = repo.lookup(entry.get_id(), Ggit.Blob.__gtype__)
-            file_contents = file_blob.get_raw_content()
-            self.file_contents_list = file_contents.decode('utf-8').splitlines()
+            file_contents = self._get_blob_content(relative_path)
+            self.file_contents_list = file_contents.decode(
+                'utf-8').splitlines()
 
             # Remove the last empty line added by gedit automatically
             last_item = self.file_contents_list[-1]
             if last_item[-1:] == '\n':
                 self.file_contents_list[-1] = last_item[:-1]
 
-        except Exception:
+        except Exception, ex:
             # New file in a git repository
+            print(ex)
             self.file_contents_list = []
 
         self.update()
