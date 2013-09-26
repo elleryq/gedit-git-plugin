@@ -1,9 +1,12 @@
 A very simple plugin that shows the git differences on the current document.
 
+It is forked from https://github.com/nacho/gedit-git-plugin.
+The original version use libgit2-glib and libgit2 to retrieve git repository
+information.  I modify to use git command.
+
 Install:
 	* mkdir -p $HOME/.local/share/gedit/plugins
 	* cp -r git git.plugin $HOME/.local/share/gedit/plugins/
 
 Requirements:
 	* gedit
-	* libgit2-glib
