@@ -62,10 +62,41 @@ class DiffRenderer(GtkSource.GutterRenderer):
                      cell_area.width, cell_area.height)
         cr.fill()
 
+    def do_query_activatable(self, it, area, event):
+        return True
+
+    def do_activate(self, it, area, event):
+        LEFT_MOUSE_BUTTON = 1
+        LF_TYPES = { "lf": "\n", "cr": "\r", "cr-lf": "\r\n" }
+
+        line = it.get_line() + 1
+        line_context = self.file_context.get(line, None)
+
+        if line_context != None and \
+           event.get_button()[1] == LEFT_MOUSE_BUTTON:
+            content = it.get_buffer()
+            additional_insert = ""
+
+            if line_context.line_type == DiffType.MODIFIED or \
+               line_context.line_type == DiffType.REMOVED:
+                newline = content.get_newline_type().value_nick
+                additional_insert = LF_TYPES[newline]
+
+            start = content.get_iter_at_line(line_context.get_start())
+            end = content.get_iter_at_line(line_context.get_end())
+
+            if line_context.line_type == DiffType.REMOVED:
+                start = content.get_iter_at_line(line_context.get_start() + 1)
+            else:
+                content.delete(start, end)
+
+            content.insert(start, '\n'.join(line_context.removed_lines) + \
+                           additional_insert)
+
     def do_query_tooltip(self, it, area, x, y, tooltip):
         line = it.get_line() + 1
-
         line_context = self.file_context.get(line, None)
+
         if line_context is None:
             return False
 

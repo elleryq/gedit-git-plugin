@@ -25,12 +25,19 @@ import os
 from subprocess import Popen, PIPE
 
 
-class LineContext:
-    __slots__ = ('removed_lines', 'line_type')
+class LineContext(object):
+    __slots__ = ('removed_lines', 'line_type', 'range')
 
     def __init__(self):
         self.removed_lines = []
         self.line_type = DiffType.NONE
+        self.range = None
+
+    def get_start(self):
+        return self.range[0] - 1
+
+    def get_end(self):
+        return self.range[0] + (self.range[1] if len(self.range) > 1 else 1) - 1
 
 
 class GitPlugin(GObject.Object, Gedit.ViewActivatable):
@@ -117,7 +124,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
                 cwd=os.path.dirname(self.location.get_path()),
                 stdout=PIPE, stderr=PIPE)
             content, err = process.communicate()
-        except Exception, ex:
+        except Exception as ex:
             raise ex
         return content
 
@@ -153,7 +160,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             if last_item[-1:] == '\n':
                 self.file_contents_list[-1] = last_item[:-1]
 
-        except Exception, ex:
+        except Exception as ex:
             # New file in a git repository
             self.file_contents_list = []
 
@@ -217,8 +224,10 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
             if line_data[0] == '@':
                 for token in line_data.split():
                     if token[0] == '+':
-                        hunk_point = int(token.split(',', 1)[0])
                         line_context = LineContext()
+                        line_context.range = tuple(map(int,
+                                                       token[1:].split(",")))
+                        hunk_point = line_context.range[0]
                         break
 
             elif line_data[0] == '-':
