@@ -129,7 +129,7 @@ class GitPlugin(GObject.Object, Gedit.ViewActivatable):
         return content
 
     def update_location(self, *args):
-        self.location = self.buffer.get_location()
+        self.location = self.buffer.get_file().get_location()
         if self.location is None:
             return
 
